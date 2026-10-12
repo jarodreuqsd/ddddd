@@ -1,0 +1,42 @@
+name: Publier MKV-Locuteurs.exe
+
+on:
+  push:
+    branches: [claude/beautiful-goldberg-zyvifx]
+    paths: ["mkv-locuteurs/**", ".github/workflows/publier-mkv-locuteurs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # L'exe est découpé en morceaux de 60 Mo (limite de 100 Mo par fichier dans git).
+      - name: Rassembler et vérifier l'exe
+        run: |
+          cd mkv-locuteurs
+          cat MKV-Locuteurs.exe.part* > MKV-Locuteurs.exe
+          sha256sum -c MKV-Locuteurs.exe.sha256
+
+      - name: Publier la release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mkv-locuteurs-v1.0.0
+          target_commitish: ${{ github.sha }}
+          name: MKV-Locuteurs 1.0.0 (Windows)
+          make_latest: true
+          body: |
+            Application Windows autonome : elle nomme les intervenants dans les transcriptions de réunions faites par MKV-Engine.
+
+            1. Télécharger `MKV-Locuteurs.exe` et le lancer. SmartScreen avertit car l'exe n'est pas signé : « Informations complémentaires » puis « Exécuter quand même ».
+            2. « Voix et participants… » : enrôler chaque personne (30 s où elle parle seule), cocher les présents, calibrer.
+            3. Glisser les réunions avec leur transcription `.json`, `.srt` ou `.vtt` à côté, puis « Nommer les intervenants ».
+
+            SHA-256 : `d6c7650c76f36d7a347cdb21183b79a2f3f15823f59fc5c062a1335900492930`
+          files: |
+            mkv-locuteurs/MKV-Locuteurs.exe
+            mkv-locuteurs/MKV-Locuteurs.exe.sha256
